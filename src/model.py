@@ -201,7 +201,7 @@ class unitCommitment:
 
         #Switch plant on decision variable constraint
         def switchOn_rule(model,j,r):
-            return model.s[j,r] == 1- model.i[j,r]-model.i[j,r-1]
+            return model.s[j,r] == model.i[j,r]-model.i[j,r-1]
 
         model.switchOn = Constraint(model.plant,model.rampPeriod,rule=switchOn_rule)
 
