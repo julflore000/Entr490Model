@@ -2,6 +2,8 @@ set plant := 0 1 2 3 ;
 
 set horizon := 0 1 2 3 ;
 
+set rampPeriod := 1 2 3 ;
+
 param capCost := 
 0 1 
 1 2 
@@ -20,11 +22,29 @@ param envCost :=
 2 3 
 3 4;
 
+param startUpCost := 
+0 1 
+1 2 
+2 3 
+3 4;
+
+param rampRate := 
+0 1 
+1 2 
+2 3 
+3 3;
+
 param maxCapacity := 
 0 2 
 1 3 
 2 4 
 3 5;
+
+param minCapacity := 
+0 0 
+1 1 
+2 2 
+3 3;
 
 param demand := 
 0 1 
