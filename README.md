@@ -1,5 +1,5 @@
 # Energy Mix Optimization Model
- ENTR 490 optimization model
+ ENTR 490 optimization model for Dsider
 
 
 Will optimize a energy system given the next x hours under varying decarbonization scenarios
