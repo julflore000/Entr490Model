@@ -1,5 +1,5 @@
 # Energy Mix Optimization Model
- ENTR 490 optimization model for Dsider
+ ENTR 490 optimization model for Geothermal Case Study
 
 
 Will optimize a energy system given the next x hours under varying decarbonization scenarios

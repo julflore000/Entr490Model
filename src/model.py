@@ -9,7 +9,7 @@ import numpy as np
 import os.path
 
 
-class unitCommitment:
+class techCommitment:
     def writeDataFile(data_name,lcoe,envCost,maxGenCap,demand):
         ##writing data file for model instance
 
@@ -82,7 +82,7 @@ class unitCommitment:
                     f.write('%d %d' % (i,demand[i]))                    
             f.write(';\n\n')
             
-        print("Completed data file")     
+        #print("Completed data file")     
     
     #def generateData()
             #checks if load file already exisits
@@ -92,8 +92,18 @@ class unitCommitment:
     #    print(exists(fileName))
     
     
-    def main(dataFileName,technologyNames,lcoePerTech,envCost,maxGenCap,demandInput):
-        
+    def main(dataFileName,technologyNames,lcoePerTech,envCost,carbonTax,maxGenCap,demandInput):
+        """Energy mix model which dispatches energy technologies based on LCOE and carbon tax
+
+        Args:
+            dataFileName (str): .dat file name which will read in/be created data for model run
+            technologyNames (1d array): array outlining the technologies that will be in system
+            lcoePerTech (1d array): LCOE of each energy technology ($/MWh)
+            envCost (1d array): environmental cost associate with each energy technology ($/MWh))
+            carbinTax (float/int): carbon tax in $/lb for model run (used to store output data in xlsx file)
+            maxGenCap (2d array): max generating capacity for each energy technology at each timestep
+            demandInput (1d array): timeseries data of energy system demand to meet
+        """        
         
         
         
@@ -157,11 +167,11 @@ class unitCommitment:
 
 
         ################### WRITING DATA ###################
-        if(os.path.isfile(f"../modelOutputs/{dataFileName}.dat")):
-            print(f"Data file {dataFileName} already exists!\n Skipping loading in data from relevant files")
+        if(os.path.isfile(f"../modelInputs/{dataFileName}.dat")):
+            print(f"Data file {dataFileName} already exists!\nSkipping creating .dat file")
         else:
-            print(f"Data file {dataFileName} does not exist.\n Loading in data from relevant files")
-            unitCommitment.writeDataFile(dataFileName,lcoe,
+            print(f"Data file {dataFileName} does not exist.\nCreating .dat file")
+            techCommitment.writeDataFile(dataFileName,lcoe,
                       environmentalCost,
                       maxGeneratingCapacity,
                       demandInput)
@@ -177,26 +187,51 @@ class unitCommitment:
         #saving data into dataframe
         columnNames = technologyNames
             
-        #creating dataframe
-        df = pd.DataFrame(0, index=np.arange(len(demand)), columns=columnNames)
+        #creating dataframe of raw generation at each timestep
+        dfRaw = pd.DataFrame(0.0, index=np.arange(len(demand)), columns=columnNames)
+        
         
         #assigning generation values to df
         for x,techName in zip(range(len(lcoe)),technologyNames):
             for t in range(len(demand)):
-                df[techName][t] = instance.x._data[x,t].value
+                dfRaw[techName][t] = instance.x._data[x,t].value
                 
-        df.index.name='Timestep'
+        
+        
+        #now creating a second dataframe of percent generation of each technology at each timestep
+        dfPercent = pd.DataFrame(0.0, index=np.arange(len(demand)), columns=columnNames)
+        
+                
+        for t in range(len(demand)):
+            totalGen = 0
+            #getting out each generation for each tech at t timestep
+            for techName in technologyNames:
+                totalGen +=  dfRaw[techName][t]
             
+            #then converting the same indices into percents
+            for techName in technologyNames:
+                dfPercent[techName][t] =  (dfRaw[techName][t])/totalGen
+
+        #renaming index col for more clarity
+        dfRaw.index.names = ['Timestep']
+        dfPercent.index.names = ['Timestep']
+        
         #saving to excel
-        outputFileLocation = "../modelOutputs/outputUnitCommitment.xlsx"
+        outputFileLocation = f"../modelOutputs/outputEnergyCommitmentCT{carbonTax}.xlsx"
         
-        df.to_excel("../modelOutputs/outputUnitCommitment.xlsx")
+        writer = pd.ExcelWriter(outputFileLocation, engine = 'xlsxwriter')
         
+        dfRaw.to_excel(writer,sheet_name = 'rawGeneration')
+        dfPercent.to_excel(writer,sheet_name = 'percentGeneration')       
+         
+         
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
         print(f"Model results saved to: {outputFileLocation}")
         
 
-#results are in plant,time
-
+#results are in energy technology,time
+'''
 ##   running test   ##
 fileName = "test"
 energyTechnologies = ["Solar","Gas","Wind"]
@@ -212,3 +247,4 @@ unitCommitment.main(fileName,energyTechnologies,
                     demand)
 
 print("test run done!")
+'''
