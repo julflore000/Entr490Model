@@ -3,7 +3,7 @@
 
 
 Will optimize a energy system given the next x hours under varying decarbonization scenarios
-* Currently setting up model to run test cases
+* Model is set up to run various carbon tax scenarios: now working on geothermal capacity and scenario identifications
 
 Goal: explore geothermal's role in a decarbonized future through energy optimization case studies and real time data
 
