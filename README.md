@@ -1,4 +1,4 @@
-# unitCommitmentModel
+# Energy Mix Optimization Model
  ENTR 490 optimization model
 
 
