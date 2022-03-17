@@ -3,26 +3,12 @@ import numpy as np
 from model import techCommitment
 from datetime import datetime
 
-
-#first starting with simply LCOE for energy cost
-#from: https://www.lazard.com/media/451419/lazards-levelized-cost-of-energy-version-140.pdf
-
-
-
-## main technologies by index
-# 0-CC: Natural Gas Fired Combined Cycle" 'Natural Gas Fired Combustion Turbine'
-# 1-ST: 'Conventional Steam Coal', 'Natural Gas Steam Turbine'
-# 2-NU: 'Nuclear'
-# 3-W: onshore wind
-# 4-S: solar
-# 5-GT: geothermal energy<- still need to input possible generation
-#geothermal LCOE is last in LCOE array
-geothermalLCOE = 115
+geothermalLCOE = 80
 lcoeArray = np.array([44,65,129,26,28,geothermalLCOE])
 
 
 
-#emissions in lb/MWh, follows same index rules as lcoe above
+#emissions in metric ton/MWh, follows same index rules as lcoe above
 emissionsArray = np.array([720,1839,0,0,0,0])*0.000453592
 
 #would be in $/lb of CO2
@@ -52,21 +38,18 @@ for techIndex,techName in zip(range(0,len(lcoeArray)),energyTechnologies):
 demand = loadData["ERCOT"].to_numpy()
 
 
-# for tracking elapsed time
-startRun = datetime.now()
-start_time = startRun.strftime("%H:%M:%S")
-print("Run started:", start_time)
-
-techCommitment.main(dataFileName,energyTechnologies,
+#now running in batch
+for GtLCOE in range(87,116,7):
+    print(f"Geothermal LCOE: {GtLCOE}")
+    for carbonTax in range(100,201,32):
+        print(f"carbon tax: {carbonTax}")
+        #assigning unique values
+        lcoeArray = np.array([44,65,129,26,28,GtLCOE])
+        dataFileName = f"ErcotGenCT{carbonTax}GT{GtLCOE}"
+        environmentalCost = emissionsArray*carbonTax
+        
+        
+        techCommitment.main(dataFileName,energyTechnologies,
                     lcoeArray,environmentalCost,carbonTax,
                     maxGeneratingCapacity,
                     demand)
-
-
-#getting end time
-endRun = datetime.now()
-end_time = endRun.strftime("%H:%M:%S")
-print("Run over:", end_time)
-
-#printing total model runtime
-print("Total model time took: ",str(endRun-startRun))

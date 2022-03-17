@@ -113,6 +113,8 @@ class techCommitment:
         maxGeneratingCapacity = maxGenCap
         demand = demandInput
 
+        #geothermal LCOE is last in lcoe array
+        geothermalLCOE = lcoe[len(lcoe)-1]
 
         # creating optimization model with pyomo
         model = AbstractModel()
@@ -170,16 +172,21 @@ class techCommitment:
         if(os.path.isfile(f"../modelInputs/{dataFileName}.dat")):
             print(f"Data file {dataFileName} already exists!\nSkipping creating .dat file")
         else:
-            print(f"Data file {dataFileName} does not exist.\nCreating .dat file")
+            #print(f"Data file {dataFileName} does not exist.\nCreating .dat file")
             techCommitment.writeDataFile(dataFileName,lcoe,
-                      environmentalCost,
-                      maxGeneratingCapacity,
-                      demandInput)
+                    environmentalCost,
+                    maxGeneratingCapacity,
+                    demandInput)
+        
         # load in data for the system
         data = DataPortal()
         data.load(filename=f"../modelInputs/{dataFileName}.dat", model=model)
         instance = model.create_instance(data)
+        
 
+        
+        
+        
         solver = SolverFactory('glpk')
         result = solver.solve(instance)
         #instance.display()
@@ -217,7 +224,7 @@ class techCommitment:
         dfPercent.index.names = ['Timestep']
         
         #saving to excel
-        outputFileLocation = f"../modelOutputs/outputEnergyCommitmentCT{carbonTax}.xlsx"
+        outputFileLocation = f"../modelOutputs/outputEnergyCommitmentCT{carbonTax}GT{geothermalLCOE}.xlsx"
         
         writer = pd.ExcelWriter(outputFileLocation, engine = 'xlsxwriter')
         

@@ -19,3 +19,8 @@ Data sources:
 * cleanedGen: represents the maximum generation of that technology at that hour. It is assumed thermal tech (coal, gas, nuclear) will not have time dependency, however wind and solar are obviously variable.
 
 
+# Model Results
+
+* See excel sheet for geothermal interacting with NG under LCOE and carbon tax
+* Nuclear never deployed as $129 is too high then highest geothermal LCOE ($115)
+
