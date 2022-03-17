@@ -22,5 +22,13 @@ Data sources:
 # Model Results
 
 * See excel sheet for geothermal interacting with NG under LCOE and carbon tax
-* Nuclear never deployed as $129 is too high then highest geothermal LCOE ($115)
+* Nuclear never deployed as $129 is too high even with highest geothermal LCOE ($115)
+* In simple arithmetic, we are able to see when geothermal is deployed vs NG
+* Geothermal deployed when LCOE < NG LCOE + Env cost
+* Model inputs
+    * NG LCOE = 44
+    * Then if given the geothermal LCOE of say 115
+    * required env cost (which is equal to pollution*carbonTax which for NG = 0.326587*carbonTax)
+    * Then carbonTax = (115-44)/.32 ~= $220
+    * See spreadsheet in modelOutputs geothermalDeployedConditions.xlsx for given carbonTax and geothermal LCOE for it to be widely deployed
 
