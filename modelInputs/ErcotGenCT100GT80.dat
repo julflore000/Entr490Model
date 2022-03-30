@@ -13,8 +13,8 @@ param lcoe :=
 5 80;
 
 param envCost := 
-0 13 
-1 33 
+0 32 
+1 83 
 2 0 
 3 0 
 4 0 

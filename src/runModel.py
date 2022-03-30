@@ -17,7 +17,7 @@ from datetime import datetime
 # 4-S: solar
 # 5-GT: geothermal energy<- still need to input possible generation
 #geothermal LCOE is last in LCOE array
-geothermalLCOE = 115
+geothermalLCOE = 100
 lcoeArray = np.array([44,65,129,26,28,geothermalLCOE])
 
 
@@ -25,7 +25,7 @@ lcoeArray = np.array([44,65,129,26,28,geothermalLCOE])
 #emissions in lb/MWh, follows same index rules as lcoe above
 emissionsArray = np.array([720,1839,0,0,0,0])*0.000453592
 
-#would be in $/lb of CO2
+#in $/metric ton of CO2
 carbonTax = 40
 
 #reading in generation and load data
@@ -36,15 +36,23 @@ loadData = pd.read_excel("../dataInputs/cleanedLoad.xlsx")
 #filter out hour ending data col name
 energyTechnologies = genData.columns.to_numpy()[1:len(lcoeArray)+1]
 
-dataFileName = "ErcotGenBase"
+dataFileName = f"ErcotGenCT{carbonTax}GT{geothermalLCOE}"
  
 
 environmentalCost = emissionsArray*carbonTax
 
 maxGeneratingCapacity = np.zeros((len(emissionsArray),len(genData["Coal"])))
 
+#capacity factor array for the two variable generation technologies (wind and solar)
+capacityFactors = np.zeros((2,len(genData["Coal"])))
+
 for techIndex,techName in zip(range(0,len(lcoeArray)),energyTechnologies):
     maxGeneratingCapacity[techIndex] = genData[techName].to_numpy()
+    if(techName == "Wind"):
+        capacityFactors[0] = genData[techName].to_numpy()
+    elif(techName == "Solar"):
+        capacityFactors[1] = genData[techName].to_numpy()
+        
 
 
 #now getting demand
@@ -59,7 +67,7 @@ print("Run started:", start_time)
 
 techCommitment.main(dataFileName,energyTechnologies,
                     lcoeArray,environmentalCost,carbonTax,
-                    maxGeneratingCapacity,
+                    maxGeneratingCapacity,capacityFactors,
                     demand)
 
 

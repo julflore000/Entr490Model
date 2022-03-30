@@ -10,7 +10,7 @@ import os.path
 
 
 class techCommitment:
-    def writeDataFile(data_name,lcoe,envCost,maxGenCap,demand):
+    def writeDataFile(data_name,lcoe,envCost,maxGenCap,capFactors,demand):
         ##writing data file for model instance
 
         with open('../modelInputs/'+str(data_name)+'.dat', 'w') as f:
@@ -27,8 +27,14 @@ class techCommitment:
                 f.write('%d ' % i)
             f.write(';\n\n')
  
+ 
+            #renewable gen indices set
+            f.write('set renewableTech := ')
+            for i in [3,4]:
+                f.write('%d ' % i)
+            f.write(';\n\n')            
             
-            #capital cost parameter
+            #LCOE cost parameter
             f.write('param lcoe := \n')
             for i in range(len(lcoe)):
                 if(i != len(lcoe)-1):
@@ -49,6 +55,7 @@ class techCommitment:
 
 
                         
+            
             #max capacity parameter (need special table format as 2d param)
             
             #writing column info
@@ -70,8 +77,30 @@ class techCommitment:
                 f.write('\n')
             f.write(';\n\n')
             
+            #capacity factors parameter (need special table format as 2d param)
             
+            #writing column info
+            f.write('param capacityFactors:' + '\t')
+            for t in range(0,len(demand)):
+                if t != 'name':
+                    f.write(str(t) + '\t')
+            f.write(':=\n\n')
+             #now filling in data for 2d param max capacity
 
+            #only two technologies
+            for t in [3,4]:    
+                for d in  range(0,len(demand)):
+                    #first cell entry in row
+                    if d==0:
+                        f.write(str(t) + '\t' + str(capFactors[t-3][d]) + '\t') 
+                    else:
+                        #then filling in other data
+                        f.write(str(capFactors[t-3][d]) + '\t')            
+                f.write('\n')
+            f.write(';\n\n')
+            
+            
+            
             
             #demand parameter
             f.write('param demand := \n')
@@ -92,7 +121,7 @@ class techCommitment:
     #    print(exists(fileName))
     
     
-    def main(dataFileName,technologyNames,lcoePerTech,envCost,carbonTax,maxGenCap,demandInput):
+    def main(dataFileName,technologyNames,lcoePerTech,envCost,carbonTax,maxGenCap,capFactors,demandInput):
         """Energy mix model which dispatches energy technologies based on LCOE and carbon tax
 
         Args:
@@ -102,6 +131,7 @@ class techCommitment:
             envCost (1d array): environmental cost associate with each energy technology ($/MWh))
             carbinTax (float/int): carbon tax in $/lb for model run (used to store output data in xlsx file)
             maxGenCap (2d array): max generating capacity for each energy technology at each timestep
+            capFactors (2d array): capacity factors for renewable generation
             demandInput (1d array): timeseries data of energy system demand to meet
         """        
         
@@ -122,17 +152,20 @@ class techCommitment:
         ################### SETS  ###################
         model.tech = RangeSet(0,len(lcoePerTech)-1)
         model.horizon = RangeSet(0,len(demand)-1)
-
+        
+        #unique indices for renewable gen ()
+        model.renewableTech = Set(initialize=[3,4])
+        
         ################### PARAMETERS  ###################
         model.lcoe = Param(model.tech)
         model.envCost = Param(model.tech)
         model.maxCapacity = Param(model.tech,model.horizon)
         model.demand = Param(model.horizon)
-
+        model.capacityFactors = Param(model.renewableTech,model.horizon)
 
         ################### DECISION VARIABLES  ###################
         model.x = Var(model.tech,model.horizon,domain=NonNegativeReals)
-
+        model.g = Var(model.renewableTech,domain=NonNegativeReals)
 
 
 
@@ -159,7 +192,15 @@ class techCommitment:
         def belowMaxCap_rule(model,j,t):
             return model.x[j,t] <= model.maxCapacity[j,t]
 
-        model.belowCap = Constraint(model.tech,model.horizon,rule=belowMaxCap_rule)
+        #specifying correct indices for non variable renewables
+        model.belowCap = Constraint([0,1,2,5],model.horizon,rule=belowMaxCap_rule)
+
+        #generation from renewables must equal respective capacity*capacity factor
+        def capacityFactor_rule(model,j,t):
+            return model.x[j,t] == model.g[j]*model.capacityFactors[j,t]
+
+        #specifying correct indices for non variable renewables
+        model.capFactor = Constraint(model.renewableTech,model.horizon,rule=capacityFactor_rule)
 
 
         ################### END CONSTRAINTS ###################
@@ -175,7 +216,7 @@ class techCommitment:
             #print(f"Data file {dataFileName} does not exist.\nCreating .dat file")
             techCommitment.writeDataFile(dataFileName,lcoe,
                     environmentalCost,
-                    maxGeneratingCapacity,
+                    maxGeneratingCapacity,capFactors,
                     demandInput)
         
         # load in data for the system
